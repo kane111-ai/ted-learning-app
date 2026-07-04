@@ -34,20 +34,48 @@
         </div>
     </div>
 
-    <script>
-        // 🌟 ここが超重要！ RenderのAPIが直るまでの「ダミーデータ」
-        const dummyTranscript = "Thank you so much. It's a great honor to be here. Today I want to talk about the future of technology and how it will impact our lives. This is just a dummy text for testing our amazing application.";
+    // 「読み込む」ボタンが押されたときに実行される関数
+async function loadVideo() {
+    // 1. 入力されたURLを取得する（※ inputタグのIDに合わせてください）
+    const urlInput = document.querySelector('input[type="text"]').value; 
+    
+    // 2. URLから動画ID（11桁の英数字）を抜き出す
+    const videoIdMatch = urlInput.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/);
+    if (!videoIdMatch) {
+        alert("正しいYouTubeのURLを入力してください！");
+        return;
+    }
+    const videoId = videoIdMatch[1];
 
-        function loadTranscript() {
-            const display = document.getElementById('transcript-display');
-            
-            // 本当はここで「fetch('https://ted-learning-app.onrender.com/api/...')」と通信しますが、
-            // 今はダミーデータをそのまま画面に出します！
-            display.innerText = dummyTranscript;
-            
-            // 💡 次はこの部分に、「文字を隠して穴埋め問題にするプログラム」を書いていきます！
+    // 3. 左側の動画プレイヤーを更新する（※ iframeのIDに合わせてください）
+    // document.querySelector('iframe').src = `https://www.youtube.com/embed/${videoId}`;
+
+    // 4. RenderのAPIから字幕を取得する！
+    try {
+        console.log("字幕を取得中...");
+        // APIへアクセス！
+        const response = await fetch(`https://ted-learning-app.onrender.com/api/transcript?v=${videoId}`);
+        
+        if (!response.ok) {
+            throw new Error(`エラー発生: ${response.status}`);
         }
-    </script>
+        
+        const data = await response.json();
+        const transcriptText = data.text;
+        console.log("🎉 字幕取得成功！", transcriptText);
+        
+        // ★本来はここで「AIに問題を作らせる処理」を呼び出します（次のステップで実装）
+        
+    } catch (error) {
+        console.error("字幕の取得に失敗しました", error);
+        
+        // Renderが429エラー（制限中）などで取得できない場合の「保険（ダミーデータ）」
+        alert("API制限中のため、ダミーのテキストで開発を進めます！");
+        const dummyText = "The development of geothermal energy is essential for the future. Fluids are injected into the deep rock.";
+        
+        // ★ここでダミーデータを使ってテストを続行する処理を呼び出します
+    }
+}
 
 </body>
 </html>
