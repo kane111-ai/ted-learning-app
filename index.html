@@ -3,58 +3,100 @@
   <head>
     <base target="_top">
     <style>
-      body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; color: #333; }
-      #player { margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+      body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
+      h2 { text-align: center; color: #2c3e50; }
       
-      /* 新しく追加した入力エリアと履歴エリアのデザイン */
-      .input-area, .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-      input { padding: 10px; font-size: 16px; width: 350px; border: 1px solid #ccc; border-radius: 5px; }
+      /* 全体を左右に分けるコンテナ */
+      .main-container { display: flex; gap: 30px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
+      
+      /* 左側：動画＆コントロール */
+      .video-section { flex: 1; min-width: 640px; }
+      .input-area { display: flex; gap: 10px; margin-bottom: 20px; }
+      input { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
       button, select { padding: 10px 15px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; transition: 0.3s; }
       button:hover { background-color: #0056b3; }
       select { background-color: #28a745; }
-      
       #videoTitle { font-size: 1.2em; font-weight: bold; margin-bottom: 15px; color: #444; }
+      #player { width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+      .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
       
-      .history-container { margin-top: 40px; text-align: left; max-width: 640px; margin-left: auto; margin-right: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      /* 右側：学習エリア（ディクテーション＆AI語彙） */
+      .learning-section { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+      .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+      .box h3 { margin-top: 0; color: #007bff; border-bottom: 2px solid #f4f4f9; padding-bottom: 10px; }
+      
+      textarea { width: 100%; height: 150px; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; resize: vertical; box-sizing: border-box; }
+      
+      /* AI語彙リストのデザイン */
+      .vocab-list { list-style: none; padding: 0; margin: 0; }
+      .vocab-list li { padding: 10px 0; border-bottom: 1px dashed #eee; line-height: 1.5; }
+      .tag-content { display: inline-block; background: #ffeaa7; color: #d35400; font-size: 0.8em; padding: 2px 6px; border-radius: 4px; margin-left: 10px; }
+      .tag-function { display: inline-block; background: #dfe6e9; color: #636e72; font-size: 0.8em; padding: 2px 6px; border-radius: 4px; margin-left: 10px; }
+
+      /* 履歴エリア */
+      .history-container { margin-top: 20px; text-align: left; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
       .history-item { cursor: pointer; color: #007bff; padding: 8px 0; border-bottom: 1px solid #eee; transition: 0.2s; }
       .history-item:hover { color: #0056b3; font-weight: bold; padding-left: 5px; }
     </style>
   </head>
   <body>
 
-    <h2>TED シャドーイング Player</h2>
+    <h2>TED シャドーイング & ディクテーション Player</h2>
     
-    <!-- 1. URL入力エリア -->
-    <div class="input-area">
-      <input type="text" id="urlInput" placeholder="YouTubeのURLを貼り付け">
-      <button onclick="loadNewVideo()">読み込む</button>
-    </div>
-
-    <!-- 2. タイトル表示エリア -->
-    <div id="videoTitle">ここに動画のタイトルが表示されます</div>
-    
-    <!-- YouTubeプレイヤー -->
-    <div id="player"></div>
-
-    <!-- コントロールボタン -->
-    <div class="controls">
-      <button onclick="playVideo()">▶ 再生</button>
-      <button onclick="pauseVideo()">⏸ 一時停止</button>
-      <button onclick="rewind10Seconds()">⏪ 10秒戻る</button>
+    <div class="main-container">
       
-      <select id="speed" onchange="changeSpeed()">
-        <option value="0.5">0.5x (Slow)</option>
-        <option value="0.75">0.75x</option>
-        <option value="1" selected>1.0x (Normal)</option>
-        <option value="1.25">1.25x</option>
-        <option value="1.5">1.5x</option>
-      </select>
-    </div>
+      <!-- ＝＝＝ 左側：動画エリア ＝＝＝ -->
+      <div class="video-section">
+        <div class="input-area">
+          <input type="text" id="urlInput" placeholder="YouTubeのURLを貼り付け">
+          <button onclick="loadNewVideo()">読み込む</button>
+        </div>
+        <div id="videoTitle">📺 動画を読み込んでください</div>
+        
+        <div id="player"></div>
 
-    <!-- 3. 履歴表示エリア -->
-    <div class="history-container">
-      <h3>🕒 最近読み込んだ動画</h3>
-      <div id="historyList">履歴はありません</div>
+        <div class="controls">
+          <button onclick="playVideo()">▶ 再生</button>
+          <button onclick="pauseVideo()">⏸ 一時停止</button>
+          <button onclick="rewind10Seconds()">⏪ 10秒戻る</button>
+          <select id="speed" onchange="changeSpeed()">
+            <option value="0.5">0.5x (Slow)</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1.0x (Normal)</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+          </select>
+        </div>
+
+        <div class="history-container">
+          <h3>🕒 最近読み込んだ動画</h3>
+          <div id="historyList">履歴はありません</div>
+        </div>
+      </div>
+
+      <!-- ＝＝＝ 右側：学習エリア ＝＝＝ -->
+      <div class="learning-section">
+        
+        <!-- ディクテーション入力枠 -->
+        <div class="box">
+          <h3>✍️ ディクテーション（書き取り）</h3>
+          <textarea id="dictationText" placeholder="動画を再生し、聞き取れた英語をここにタイピングしてください。&#10;※10秒戻るボタン（⏪）を活用して何度も聞き直しましょう！"></textarea>
+        </div>
+
+        <!-- AI語彙リスト枠（ダミーデータ） -->
+        <div class="box">
+          <h3>🤖 AI 重要語彙ピックアップ（※モックアップ）</h3>
+          <p style="font-size: 0.9em; color: #666;">※最終的にはここに、AIがスクリプトから抽出した単語が自動で表示されます。</p>
+          <ul class="vocab-list">
+            <li><strong>geothermal</strong> : 地熱の <span class="tag-content">内容語（強く発音）</span></li>
+            <li><strong>granite</strong> : 花崗岩 <span class="tag-content">内容語（強く発音）</span></li>
+            <li><strong>of</strong> : 〜の <span class="tag-function">機能語（Schwa /ə/ で弱く）</span></li>
+            <li><strong>could have been</strong> : 〜だったかもしれない <span class="tag-function">機能語（連結して短く）</span></li>
+          </ul>
+        </div>
+        
+      </div>
+      
     </div>
 
     <script>
@@ -67,103 +109,60 @@
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
           height: '360',
-          width: '640',
+          width: '100%',
           videoId: 'arj7oStGLkU', // デフォルト動画
           playerVars: { 'playsinline': 1, 'rel': 0 },
-          events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
-          }
+          events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
         });
-        displayHistory(); // 画面を開いた時に履歴を表示
+        displayHistory();
       }
 
-      function onPlayerReady(event) {
-         updateTitle(); // 準備ができたらタイトル取得
-      }
-
-      // 動画が再生された時などにもタイトルを更新する
+      function onPlayerReady(event) { updateTitle(); }
       function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING || event.data == YT.PlayerState.CUED) {
-          updateTitle();
-        }
+        if (event.data == YT.PlayerState.PLAYING || event.data == YT.PlayerState.CUED) updateTitle();
       }
 
-      // タイトルを取得してHTMLを書き換える処理
       function updateTitle() {
          var title = player.getVideoData().title;
-         if(title) {
-           document.getElementById('videoTitle').innerText = "📺 " + title;
-         }
+         if(title) document.getElementById('videoTitle').innerText = "📺 " + title;
       }
 
-      // 入力されたURLから動画を読み込む処理
       function loadNewVideo() {
         var url = document.getElementById('urlInput').value;
-        
-        // URLから「v=〇〇」などのID部分だけを抜き出す魔法の呪文（正規表現）
         var match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*embed\/))([a-zA-Z0-9_-]{11})/);
-        
         if (match && match[1]) {
           var videoId = match[1];
-          player.loadVideoById(videoId); // 新しい動画を読み込む
-          saveToHistory(videoId, url);   // 履歴に保存する
+          player.loadVideoById(videoId);
+          saveToHistory(videoId, url);
         } else {
           alert("正しいYouTubeのURLを入力してください！");
         }
       }
 
-      // --- 履歴保存機能（LocalStorageを利用） ---
       function saveToHistory(videoId, url) {
-        // 保存されている履歴を呼び出す（なければ空っぽ）
         var history = JSON.parse(localStorage.getItem('ted_history')) || [];
-        
-        // 同じ動画が既にあれば削除（重複防止）
         history = history.filter(item => item.id !== videoId);
-        
-        // 新しい履歴を一番上に追加（日付と一緒に）
-        history.unshift({ 
-          id: videoId, 
-          date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString() 
-        });
-        
-        // 履歴は最大10件まで保存
+        history.unshift({ id: videoId, date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString() });
         if(history.length > 10) history.pop();
-        
-        // ブラウザに保存
         localStorage.setItem('ted_history', JSON.stringify(history));
         displayHistory();
       }
 
-      // 履歴を画面に表示する処理
       function displayHistory() {
         var history = JSON.parse(localStorage.getItem('ted_history')) || [];
         if (history.length === 0) return;
-
         var listHtml = "";
         history.forEach(function(item) {
-          // クリックしたらその動画を読み込むボタンにする
           listHtml += `<div class="history-item" onclick="loadFromHistory('${item.id}')">▶ ${item.date} に視聴した動画</div>`;
         });
         document.getElementById('historyList').innerHTML = listHtml;
       }
 
-      // 履歴から動画をロードする処理
-      function loadFromHistory(videoId) {
-        player.loadVideoById(videoId);
-      }
-
-      // --- 基本コントロール用の関数群 ---
+      function loadFromHistory(videoId) { player.loadVideoById(videoId); }
       function playVideo() { player.playVideo(); }
       function pauseVideo() { player.pauseVideo(); }
-      function rewind10Seconds() {
-        var currentTime = player.getCurrentTime();
-        player.seekTo(currentTime - 10, true);
-      }
-      function changeSpeed() {
-        var speed = document.getElementById('speed').value;
-        player.setPlaybackRate(parseFloat(speed));
-      }
+      function rewind10Seconds() { player.seekTo(player.getCurrentTime() - 10, true); }
+      function changeSpeed() { player.setPlaybackRate(parseFloat(document.getElementById('speed').value)); }
     </script>
   </body>
 </html>
