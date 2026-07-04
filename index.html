@@ -4,49 +4,67 @@
     <base target="_top">
     <style>
       body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
-      
+
       /* --- ヘッダー＆APIキー設定エリア --- */
-      .header-area { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+      .header-area { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
       h2 { color: #2c3e50; margin: 0; }
-      .api-key-container { display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-      .api-key-container input { width: 250px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
+      .api-key-container { display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-wrap: wrap; }
+      .api-key-container input { width: 220px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
       .api-key-container button { background-color: #34495e; padding: 8px 12px; font-size: 0.9em; }
       .api-key-container button:hover { background-color: #2c3e50; }
-      #apiKeyStatus { font-size: 0.85em; color: #27ae60; font-weight: bold; width: 80px; }
+      #apiKeyStatus { font-size: 0.85em; color: #27ae60; font-weight: bold; }
+      .backend-url-input { width: 170px !important; }
 
       /* --- メインレイアウト --- */
-      .main-container { display: flex; gap: 30px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
-      
+      .main-container { display: flex; gap: 30px; max-width: 1200px; margin: 0 auto; align-items: flex-start; flex-wrap: wrap; }
+
       /* 左側：動画エリア */
-      .video-section { flex: 1; min-width: 600px; }
+      .video-section { flex: 1; min-width: 500px; }
       .input-area { display: flex; gap: 10px; margin-bottom: 20px; }
       .input-area input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
       button, select { padding: 10px 15px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; transition: 0.3s; }
       button:hover { background-color: #0056b3; }
+      button:disabled { background-color: #aaa; cursor: not-allowed; }
       select { background-color: #28a745; }
       #videoTitle { font-size: 1.2em; font-weight: bold; margin-bottom: 15px; color: #444; }
       #player { width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
-      .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-      
+      .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+
       .history-container { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
       .history-item { cursor: pointer; color: #007bff; padding: 8px 0; border-bottom: 1px solid #eee; transition: 0.2s; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
       .history-item:hover { color: #0056b3; font-weight: bold; padding-left: 5px; }
 
       /* 右側：学習エリア */
-      .learning-section { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+      .learning-section { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px; }
       .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-      .box h3 { margin-top: 0; color: #007bff; border-bottom: 2px solid #f4f4f9; padding-bottom: 10px; }
-      
-      .dictation-sentence { font-size: 1.1em; line-height: 1.8; margin-bottom: 15px; }
-      .dictation-input { width: 100px; padding: 5px; font-size: 1em; border: 1px solid #007bff; border-radius: 4px; text-align: center; font-weight: bold;}
+      .box-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f4f4f9; padding-bottom: 10px; margin-bottom: 10px; }
+      .box h3 { margin: 0; color: #007bff; }
+      .regen-btn { background-color: #6c757d; font-size: 0.8em; padding: 6px 10px; }
+      .regen-btn:hover { background-color: #565e64; }
+
+      .status-line { font-size: 0.9em; color: #666; margin-bottom: 10px; min-height: 1.2em; }
+      .status-line.error { color: #c0392b; font-weight: bold; }
+
+      .dictation-item { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px dashed #eee; }
+      .dictation-item:last-child { border-bottom: none; }
+      .dictation-sentence { font-size: 1.05em; line-height: 1.8; margin-bottom: 8px; }
+      .dictation-input { width: 130px; padding: 5px; font-size: 1em; border: 1px solid #007bff; border-radius: 4px; text-align: center; font-weight: bold; }
+      .dictation-input.correct { border-color: #27ae60; background-color: #eafaf1; }
+      .dictation-input.wrong { border-color: #e74c3c; background-color: #fdecea; }
+      .dictation-answer-hint { font-size: 0.85em; color: #888; margin-left: 8px; }
       .check-btn { background-color: #e67e22; width: 100%; margin-top: 10px; }
       .check-btn:hover { background-color: #d35400; }
-      
+
+      .quiz-item { margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px dashed #eee; }
+      .quiz-item:last-child { border-bottom: none; }
       .quiz-question { font-weight: bold; margin-bottom: 10px; }
       .quiz-options { display: flex; flex-direction: column; gap: 8px; }
       .quiz-option { background-color: #f8f9fa; border: 1px solid #ddd; color: #333; text-align: left; padding: 12px; }
       .quiz-option:hover { background-color: #e2e6ea; }
-      .mock-note { font-size: 0.8em; color: #888; margin-bottom: 10px; display: block; }
+      .quiz-option.correct { background-color: #d4edda; border-color: #27ae60; color: #1e7e34; font-weight: bold; }
+      .quiz-option.wrong { background-color: #f8d7da; border-color: #e74c3c; color: #a71d2a; }
+      .quiz-explanation { margin-top: 8px; font-size: 0.9em; color: #555; background: #f4f4f9; padding: 8px 10px; border-radius: 6px; display: none; }
+      .placeholder-note { font-size: 0.9em; color: #888; }
     </style>
   </head>
   <body>
@@ -55,13 +73,15 @@
     <div class="header-area">
       <h2>TED AI学習 Player</h2>
       <div class="api-key-container">
-        <span>🔑 Gemini API:</span>
+        <span>🔗 API URL:</span>
+        <input type="text" id="backendUrlInput" class="backend-url-input" placeholder="http://localhost:5000">
+        <span>🔑 Gemini:</span>
         <input type="password" id="apiKeyInput" placeholder="AI-xxxxxxxxxxxxxxxxx">
-        <button onclick="saveApiKey()">保存</button>
+        <button onclick="saveSettings()">保存</button>
         <span id="apiKeyStatus"></span>
       </div>
     </div>
-    
+
     <div class="main-container">
       <!-- 左側：動画エリア -->
       <div class="video-section">
@@ -90,46 +110,60 @@
       <!-- 右側：学習エリア -->
       <div class="learning-section">
         <div class="box">
-          <h3>✍️ 穴埋めディクテーション</h3>
-          <span class="mock-note">※AIが生成した重要語の穴埋めが表示されます</span>
-          <div class="dictation-sentence">
-            The development of <input type="text" class="dictation-input" placeholder="????"> energy is essential for the future.
+          <div class="box-header">
+            <h3>✍️ 穴埋めディクテーション</h3>
+            <button class="regen-btn" onclick="generateLearningContent()">🔄 再生成</button>
           </div>
-          <button class="check-btn" onclick="alert('正解チェック機能はバックエンド完成後に動きます！')">答え合わせをする</button>
+          <div class="status-line" id="dictationStatus"></div>
+          <div id="dictationContainer">
+            <span class="placeholder-note">動画を読み込むと、自動で問題が作られます。</span>
+          </div>
+          <button class="check-btn" id="dictationCheckBtn" style="display:none;" onclick="checkDictation()">答え合わせをする</button>
         </div>
 
         <div class="box">
-          <h3>🧠 AI 理解度チェッククイズ</h3>
-          <span class="mock-note">※動画の内容に基づく4択クイズが自動生成されます</span>
-          <div class="quiz-question">Q. スピーカーが述べていた「等時性」を保つための発音のコツは？</div>
-          <div class="quiz-options">
-            <button class="quiz-option">A. すべての単語を同じ強さで読む</button>
-            <button class="quiz-option">B. 機能語を弱母音(Schwa)で短く発音する</button>
-            <button class="quiz-option">C. 常に1.5倍速で話す</button>
-            <button class="quiz-option">D. 子音の後に母音を足して発音する</button>
+          <div class="box-header">
+            <h3>🧠 AI 理解度チェッククイズ</h3>
+          </div>
+          <div class="status-line" id="quizStatus"></div>
+          <div id="quizContainer">
+            <span class="placeholder-note">動画を読み込むと、自動で問題が作られます。</span>
           </div>
         </div>
       </div>
     </div>
 
     <script>
-      // --- APIキー管理の仕組み ---
-      document.addEventListener("DOMContentLoaded", function() {
+      // --- 設定(APIキー & バックエンドURL)の管理 ---
+      document.addEventListener("DOMContentLoaded", function () {
         var savedKey = localStorage.getItem('gemini_api_key');
-        if (savedKey) {
-          document.getElementById('apiKeyInput').value = savedKey;
-          document.getElementById('apiKeyStatus').innerText = "✅ 保存済";
-        }
+        if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
+
+        var savedUrl = localStorage.getItem('backend_url') || 'http://localhost:5000';
+        document.getElementById('backendUrlInput').value = savedUrl;
+
+        updateSettingsStatus();
       });
 
-      function saveApiKey() {
-        var key = document.getElementById('apiKeyInput').value;
-        if (key) {
-          localStorage.setItem('gemini_api_key', key);
-          document.getElementById('apiKeyStatus').innerText = "✅ 保存済";
-        } else {
-          alert("APIキーを入力してください。");
-        }
+      function saveSettings() {
+        var key = document.getElementById('apiKeyInput').value.trim();
+        var url = document.getElementById('backendUrlInput').value.trim().replace(/\/$/, '');
+        if (key) localStorage.setItem('gemini_api_key', key);
+        if (url) localStorage.setItem('backend_url', url);
+        updateSettingsStatus();
+      }
+
+      function updateSettingsStatus() {
+        var key = localStorage.getItem('gemini_api_key');
+        document.getElementById('apiKeyStatus').innerText = key ? "✅ 保存済" : "⚠️ 未設定";
+      }
+
+      function getBackendUrl() {
+        return localStorage.getItem('backend_url') || 'http://localhost:5000';
+      }
+
+      function getApiKey() {
+        return localStorage.getItem('gemini_api_key') || '';
       }
 
       // --- YouTube プレイヤーの仕組み ---
@@ -156,11 +190,11 @@
       }
 
       function updateTitle() {
-         var title = player.getVideoData().title;
-         if(title) {
-           document.getElementById('videoTitle').innerText = "📺 " + title;
-           updateHistoryTitle(currentVideoId, title);
-         }
+        var title = player.getVideoData().title;
+        if (title) {
+          document.getElementById('videoTitle').innerText = "📺 " + title;
+          updateHistoryTitle(currentVideoId, title);
+        }
       }
 
       function loadNewVideo() {
@@ -170,6 +204,7 @@
           currentVideoId = match[1];
           player.loadVideoById(currentVideoId);
           saveToHistory(currentVideoId, url, "タイトル取得中...");
+          generateLearningContent();
         } else {
           alert("正しいYouTubeのURLを入力してください！");
         }
@@ -179,7 +214,7 @@
         var history = JSON.parse(localStorage.getItem('ted_history')) || [];
         history = history.filter(item => item.id !== videoId);
         history.unshift({ id: videoId, title: title, date: new Date().toLocaleDateString() });
-        if(history.length > 10) history.pop();
+        if (history.length > 10) history.pop();
         localStorage.setItem('ted_history', JSON.stringify(history));
         displayHistory();
       }
@@ -196,20 +231,157 @@
       function displayHistory() {
         var history = JSON.parse(localStorage.getItem('ted_history')) || [];
         var listHtml = "";
-        history.forEach(function(item) {
+        history.forEach(function (item) {
           listHtml += `<div class="history-item" onclick="loadFromHistory('${item.id}')" title="${item.title}">▶ [${item.date}] ${item.title}</div>`;
         });
-        document.getElementById('historyList').innerHTML = listHtml;
+        document.getElementById('historyList').innerHTML = listHtml || "履歴はありません";
       }
 
-      function loadFromHistory(videoId) { 
+      function loadFromHistory(videoId) {
         currentVideoId = videoId;
-        player.loadVideoById(videoId); 
+        player.loadVideoById(videoId);
+        generateLearningContent();
       }
       function playVideo() { player.playVideo(); }
       function pauseVideo() { player.pauseVideo(); }
       function rewind10Seconds() { player.seekTo(player.getCurrentTime() - 10, true); }
       function changeSpeed() { player.setPlaybackRate(parseFloat(document.getElementById('speed').value)); }
+
+      // --- 字幕取得 → Gemini問題生成 ---
+      async function generateLearningContent() {
+        var dictationStatus = document.getElementById('dictationStatus');
+        var quizStatus = document.getElementById('quizStatus');
+        var dictationContainer = document.getElementById('dictationContainer');
+        var quizContainer = document.getElementById('quizContainer');
+        var checkBtn = document.getElementById('dictationCheckBtn');
+
+        if (!getApiKey()) {
+          dictationStatus.innerText = "⚠️ 先にGemini APIキーを保存してください";
+          dictationStatus.className = "status-line error";
+          return;
+        }
+
+        dictationContainer.innerHTML = "";
+        quizContainer.innerHTML = "";
+        checkBtn.style.display = "none";
+        dictationStatus.className = "status-line";
+        quizStatus.className = "status-line";
+        dictationStatus.innerText = "📥 字幕を取得中...";
+        quizStatus.innerText = "";
+
+        var backendUrl = getBackendUrl();
+
+        // 1) 字幕取得
+        var transcriptText;
+        try {
+          var res = await fetch(`${backendUrl}/api/transcript?v=${currentVideoId}`);
+          var data = await res.json();
+          if (!res.ok) throw new Error(data.error || "字幕取得に失敗しました");
+          transcriptText = data.text;
+        } catch (e) {
+          dictationStatus.innerText = "❌ " + e.message + "（バックエンドが起動しているか確認してください: " + backendUrl + "）";
+          dictationStatus.className = "status-line error";
+          return;
+        }
+
+        // 2) Gemini で問題生成
+        dictationStatus.innerText = "🤖 AIが問題を作成中...（数十秒かかることがあります）";
+        try {
+          var quizRes = await fetch(`${backendUrl}/api/generate-quiz`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ transcript: transcriptText, apiKey: getApiKey() })
+          });
+          var quizData = await quizRes.json();
+          if (!quizRes.ok) throw new Error(quizData.error || "問題生成に失敗しました");
+
+          dictationStatus.innerText = "";
+          quizStatus.innerText = "";
+          renderDictation(quizData.dictation || []);
+          renderQuiz(quizData.quiz || []);
+        } catch (e) {
+          dictationStatus.innerText = "❌ " + e.message;
+          dictationStatus.className = "status-line error";
+        }
+      }
+
+      function renderDictation(items) {
+        var container = document.getElementById('dictationContainer');
+        var checkBtn = document.getElementById('dictationCheckBtn');
+        if (!items.length) {
+          container.innerHTML = '<span class="placeholder-note">問題を生成できませんでした。</span>';
+          return;
+        }
+        var html = "";
+        items.forEach(function (item, i) {
+          html += `
+            <div class="dictation-item">
+              <div class="dictation-sentence">
+                ${escapeHtml(item.before)}<input type="text" class="dictation-input" id="dictation-input-${i}" data-answer="${escapeAttr(item.answer)}" placeholder="????">${escapeHtml(item.after)}
+              </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+        checkBtn.style.display = "block";
+      }
+
+      function checkDictation() {
+        var inputs = document.querySelectorAll('.dictation-input');
+        inputs.forEach(function (input) {
+          var answer = (input.dataset.answer || "").trim().toLowerCase();
+          var value = input.value.trim().toLowerCase();
+          input.classList.remove('correct', 'wrong');
+          input.classList.add(value === answer ? 'correct' : 'wrong');
+
+          var existingHint = input.parentElement.querySelector('.dictation-answer-hint');
+          if (existingHint) existingHint.remove();
+          if (value !== answer) {
+            var hint = document.createElement('span');
+            hint.className = 'dictation-answer-hint';
+            hint.innerText = "正解: " + input.dataset.answer;
+            input.insertAdjacentElement('afterend', hint);
+          }
+        });
+      }
+
+      function renderQuiz(items) {
+        var container = document.getElementById('quizContainer');
+        if (!items.length) {
+          container.innerHTML = '<span class="placeholder-note">問題を生成できませんでした。</span>';
+          return;
+        }
+        var html = "";
+        items.forEach(function (item, qi) {
+          html += `<div class="quiz-item"><div class="quiz-question">Q${qi + 1}. ${escapeHtml(item.question)}</div><div class="quiz-options">`;
+          item.options.forEach(function (opt, oi) {
+            html += `<button class="quiz-option" onclick="answerQuiz(${qi}, ${oi})">${String.fromCharCode(65 + oi)}. ${escapeHtml(opt)}</button>`;
+          });
+          html += `</div><div class="quiz-explanation" id="quiz-explanation-${qi}">${escapeHtml(item.explanation || "")}</div></div>`;
+        });
+        container.innerHTML = html;
+        window.__quizData = items;
+      }
+
+      function answerQuiz(questionIndex, optionIndex) {
+        var item = window.__quizData[questionIndex];
+        var quizItems = document.querySelectorAll('.quiz-item');
+        var buttons = quizItems[questionIndex].querySelectorAll('.quiz-option');
+        buttons.forEach(function (btn, i) {
+          btn.classList.remove('correct', 'wrong');
+          btn.disabled = true;
+          if (i === item.correct_index) btn.classList.add('correct');
+          else if (i === optionIndex) btn.classList.add('wrong');
+        });
+        document.getElementById('quiz-explanation-' + questionIndex).style.display = 'block';
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+      function escapeAttr(str) { return escapeHtml(str).replace(/"/g, '&quot;'); }
     </script>
   </body>
 </html>
