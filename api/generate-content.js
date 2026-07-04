@@ -1,6 +1,7 @@
 // POST /api/generate-content
-// body: { transcript, difficulty?, dictationCount?, quizCount?, vocabCount?, quizLanguage? ('ja'|'en') }
-// Gemini APIで、ディクテーション・理解度クイズ・重要単語集・単語クイズをまとめて生成する。
+// body: { transcript, difficulty?, dictationCount?, quizCount?, vocabCount? }
+// Gemini APIで、ディクテーション・理解度クイズ(日本語+英語)・重要単語集・単語クイズ(日本語+英語)を
+// まとめて1回で生成する。クイズは日英両方を生成しておき、フロント側で再取得なしに切り替えられるようにする。
 
 const DIFFICULTY_GUIDE = {
   easy: "各問題は易しめにしてください。ディクテーションの空欄は1語だけにし、短くシンプルな文を選んでください。内容クイズは文章から直接わかる事実を問う問題にしてください。",
@@ -20,7 +21,6 @@ export default async function handler(req, res) {
     dictationCount = 5,
     quizCount = 5,
     vocabCount = 8,
-    quizLanguage = "ja",
   } = req.body || {};
 
   if (!transcript || !String(transcript).trim()) {
@@ -38,18 +38,9 @@ export default async function handler(req, res) {
   const text = String(transcript).length > maxChars ? String(transcript).slice(0, maxChars) : String(transcript);
   const difficultyText = DIFFICULTY_GUIDE[difficulty] || DIFFICULTY_GUIDE.normal;
   const vocabQuizCount = Math.min(Number(vocabCount) || 8, 5);
-  const isEnglishQuiz = quizLanguage === "en";
-
-  const quizLangInstruction = isEnglishQuiz
-    ? "quiz の question・options・explanation は、日本語を一切使わず、すべて英語(中〜上級英語学習者向けの平易な英語)で書いてください。"
-    : "quiz の question・options・explanation は日本語で書いてください(必要なら英語のフレーズを含めてよい)。";
-
-  const vocabQuizLangInstruction = isEnglishQuiz
-    ? "vocab_quiz の options は、日本語訳ではなく英語の言い換え(同義語・簡単な英語の説明)にしてください。"
-    : "vocab_quiz の options は日本語の意味にしてください。";
 
   const prompt = `あなたは英語学習アプリの問題作成者です。以下はTEDトークの英語字幕です。
-この内容にもとづいて、日本人の英語学習者向けに次の4種類のコンテンツを作成してください。
+この内容にもとづいて、日本人の英語学習者向けに次の5種類のコンテンツを作成してください。
 
 【難易度の指示】
 ${difficultyText}
@@ -60,21 +51,25 @@ ${difficultyText}
    - answer: 空欄の正解。字幕中の表記そのまま(文字列)
    - after: 空欄より後の部分(文字列)
 
-2. quiz: 内容理解を問う4択クイズを${quizCount}問。
-   ${quizLangInstruction}
-   - question: 質問文
-   - options: 選択肢4つの配列
+2. quiz: 内容理解を問う4択クイズを${quizCount}問。question・options・explanationは日本語。
+   - question: 質問文(日本語)
+   - options: 選択肢4つの配列(日本語)
    - correct_index: 正解のインデックス(0始まりの整数)
-   - explanation: 簡単な解説
+   - explanation: 簡単な解説(日本語)
 
-3. vocabulary: 字幕中に出てくる学習価値の高い単語・フレーズを${vocabCount}個。
+3. quiz_en: 上記quizと同じ内容・同じ問題数・同じ正解を、question・options・explanationすべて
+   英語(中〜上級の英語学習者向けの平易な英語)で書いたバージョン。日本語は一切使わないこと。
+   quizと同じ順番、同じcorrect_indexにすること。
+
+4. vocabulary: 字幕中に出てくる学習価値の高い単語・フレーズを${vocabCount}個。
    - term: 単語・フレーズ(英語、字幕中の表記そのまま)
    - pos: 品詞など(例: "動詞", "熟語", "名詞" など、日本語で簡潔に)
    - meaning_ja: 日本語の意味
    - example_en: その単語を使った例文(字幕中の文をそのまま使ってよい)
 
-4. vocab_quiz: 上記vocabularyの中から${vocabQuizCount}個を使った4択クイズ。
-   ${vocabQuizLangInstruction}
+5. vocab_quiz と vocab_quiz_en: 上記vocabularyの中から${vocabQuizCount}個を使った4択クイズを
+   日本語版(vocab_quiz、optionsは日本語の意味)と英語版(vocab_quiz_en、optionsは英語の同義語・
+   簡単な英語の説明)の両方作成する。同じtermで、同じ順番、同じcorrect_indexにすること。
    - term: 出題する単語・フレーズ
    - options: 選択肢4つ(1つが正解、3つはもっともらしい誤答)
    - correct_index: 正解のインデックス(0始まりの整数)
@@ -88,10 +83,16 @@ ${difficultyText}
   "quiz": [
     {"question": "...", "options": ["...", "...", "...", "..."], "correct_index": 0, "explanation": "..."}
   ],
+  "quiz_en": [
+    {"question": "...", "options": ["...", "...", "...", "..."], "correct_index": 0, "explanation": "..."}
+  ],
   "vocabulary": [
     {"term": "...", "pos": "...", "meaning_ja": "...", "example_en": "..."}
   ],
   "vocab_quiz": [
+    {"term": "...", "options": ["...", "...", "...", "..."], "correct_index": 0}
+  ],
+  "vocab_quiz_en": [
     {"term": "...", "options": ["...", "...", "...", "..."], "correct_index": 0}
   ]
 }
