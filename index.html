@@ -3,26 +3,40 @@
   <head>
     <base target="_top">
     <style>
-      body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+      body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; color: #333; }
       #player { margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-      .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-      button, select {
-        padding: 10px 15px; font-size: 16px; cursor: pointer;
-        border: none; border-radius: 5px; background-color: #007bff; color: white;
-        transition: background-color 0.3s;
-      }
-      button:hover, select:hover { background-color: #0056b3; }
+      
+      /* 新しく追加した入力エリアと履歴エリアのデザイン */
+      .input-area, .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+      input { padding: 10px; font-size: 16px; width: 350px; border: 1px solid #ccc; border-radius: 5px; }
+      button, select { padding: 10px 15px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; transition: 0.3s; }
+      button:hover { background-color: #0056b3; }
       select { background-color: #28a745; }
+      
+      #videoTitle { font-size: 1.2em; font-weight: bold; margin-bottom: 15px; color: #444; }
+      
+      .history-container { margin-top: 40px; text-align: left; max-width: 640px; margin-left: auto; margin-right: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      .history-item { cursor: pointer; color: #007bff; padding: 8px 0; border-bottom: 1px solid #eee; transition: 0.2s; }
+      .history-item:hover { color: #0056b3; font-weight: bold; padding-left: 5px; }
     </style>
   </head>
   <body>
 
     <h2>TED シャドーイング Player</h2>
     
-    <!-- YouTubeプレイヤーが埋め込まれる場所 -->
+    <!-- 1. URL入力エリア -->
+    <div class="input-area">
+      <input type="text" id="urlInput" placeholder="YouTubeのURLを貼り付け">
+      <button onclick="loadNewVideo()">読み込む</button>
+    </div>
+
+    <!-- 2. タイトル表示エリア -->
+    <div id="videoTitle">ここに動画のタイトルが表示されます</div>
+    
+    <!-- YouTubeプレイヤー -->
     <div id="player"></div>
 
-    <!-- コントロールボタン群 -->
+    <!-- コントロールボタン -->
     <div class="controls">
       <button onclick="playVideo()">▶ 再生</button>
       <button onclick="pauseVideo()">⏸ 一時停止</button>
@@ -37,48 +51,115 @@
       </select>
     </div>
 
+    <!-- 3. 履歴表示エリア -->
+    <div class="history-container">
+      <h3>🕒 最近読み込んだ動画</h3>
+      <div id="historyList">履歴はありません</div>
+    </div>
+
     <script>
-      // 1. IFrame APIのコードを非同期で読み込む
       var tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
       var firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
       var player;
-      // 2. APIコードの読み込み完了後に実行される関数
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
           height: '360',
           width: '640',
-          // ここに好きなTEDトークのYouTube動画IDを入れます
-          // 例: ビル・ゲイツのTEDなら「8mcZcAjiJXI」
-          videoId: 'arj7oStGLkU', 
-          playerVars: {
-            'playsinline': 1,
-            'rel': 0 // 関連動画を非表示
+          videoId: 'arj7oStGLkU', // デフォルト動画
+          playerVars: { 'playsinline': 1, 'rel': 0 },
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
           }
         });
+        displayHistory(); // 画面を開いた時に履歴を表示
       }
 
-      // --- 制御用の関数群 ---
-
-      // 再生
-      function playVideo() {
-        player.playVideo();
+      function onPlayerReady(event) {
+         updateTitle(); // 準備ができたらタイトル取得
       }
 
-      // 一時停止
-      function pauseVideo() {
-        player.pauseVideo();
+      // 動画が再生された時などにもタイトルを更新する
+      function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING || event.data == YT.PlayerState.CUED) {
+          updateTitle();
+        }
       }
 
-      // 10秒巻き戻し（シャドーイングの反復練習用）
+      // タイトルを取得してHTMLを書き換える処理
+      function updateTitle() {
+         var title = player.getVideoData().title;
+         if(title) {
+           document.getElementById('videoTitle').innerText = "📺 " + title;
+         }
+      }
+
+      // 入力されたURLから動画を読み込む処理
+      function loadNewVideo() {
+        var url = document.getElementById('urlInput').value;
+        
+        // URLから「v=〇〇」などのID部分だけを抜き出す魔法の呪文（正規表現）
+        var match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*embed\/))([a-zA-Z0-9_-]{11})/);
+        
+        if (match && match[1]) {
+          var videoId = match[1];
+          player.loadVideoById(videoId); // 新しい動画を読み込む
+          saveToHistory(videoId, url);   // 履歴に保存する
+        } else {
+          alert("正しいYouTubeのURLを入力してください！");
+        }
+      }
+
+      // --- 履歴保存機能（LocalStorageを利用） ---
+      function saveToHistory(videoId, url) {
+        // 保存されている履歴を呼び出す（なければ空っぽ）
+        var history = JSON.parse(localStorage.getItem('ted_history')) || [];
+        
+        // 同じ動画が既にあれば削除（重複防止）
+        history = history.filter(item => item.id !== videoId);
+        
+        // 新しい履歴を一番上に追加（日付と一緒に）
+        history.unshift({ 
+          id: videoId, 
+          date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString() 
+        });
+        
+        // 履歴は最大10件まで保存
+        if(history.length > 10) history.pop();
+        
+        // ブラウザに保存
+        localStorage.setItem('ted_history', JSON.stringify(history));
+        displayHistory();
+      }
+
+      // 履歴を画面に表示する処理
+      function displayHistory() {
+        var history = JSON.parse(localStorage.getItem('ted_history')) || [];
+        if (history.length === 0) return;
+
+        var listHtml = "";
+        history.forEach(function(item) {
+          // クリックしたらその動画を読み込むボタンにする
+          listHtml += `<div class="history-item" onclick="loadFromHistory('${item.id}')">▶ ${item.date} に視聴した動画</div>`;
+        });
+        document.getElementById('historyList').innerHTML = listHtml;
+      }
+
+      // 履歴から動画をロードする処理
+      function loadFromHistory(videoId) {
+        player.loadVideoById(videoId);
+      }
+
+      // --- 基本コントロール用の関数群 ---
+      function playVideo() { player.playVideo(); }
+      function pauseVideo() { player.pauseVideo(); }
       function rewind10Seconds() {
         var currentTime = player.getCurrentTime();
         player.seekTo(currentTime - 10, true);
       }
-
-      // 再生速度の変更
       function changeSpeed() {
         var speed = document.getElementById('speed').value;
         player.setPlaybackRate(parseFloat(speed));
