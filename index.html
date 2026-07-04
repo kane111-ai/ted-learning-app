@@ -124,6 +124,12 @@
             <option value="8">8問</option>
           </select>
         </label>
+        <label>クイズ言語:
+          <select id="quizLanguageSelect" onchange="saveSettings()">
+            <option value="ja" selected>日本語</option>
+            <option value="en">English</option>
+          </select>
+        </label>
       </div>
     </div>
 
@@ -233,6 +239,7 @@
         var saved = JSON.parse(localStorage.getItem('ted_settings') || '{}');
         if (saved.difficulty) document.getElementById('difficultySelect').value = saved.difficulty;
         if (saved.count) document.getElementById('countSelect').value = saved.count;
+        if (saved.quizLanguage) document.getElementById('quizLanguageSelect').value = saved.quizLanguage;
       }
       function saveSettings() {
         var settings = getSettings();
@@ -241,7 +248,8 @@
       function getSettings() {
         return {
           difficulty: document.getElementById('difficultySelect').value,
-          count: document.getElementById('countSelect').value
+          count: document.getElementById('countSelect').value,
+          quizLanguage: document.getElementById('quizLanguageSelect').value
         };
       }
       document.addEventListener('DOMContentLoaded', loadSettings);
@@ -359,9 +367,10 @@
         var settings = getSettings();
         var cache = loadCache(currentVideoId);
 
-        // フルキャッシュ(同じ難易度・問題数)がある場合は何も呼ばずに表示するだけ
+        // フルキャッシュ(同じ難易度・問題数・クイズ言語)がある場合は何も呼ばずに表示するだけ
         if (cache && cache.content && !forceRegenerate &&
-            cache.settings && cache.settings.difficulty === settings.difficulty && cache.settings.count === settings.count) {
+            cache.settings && cache.settings.difficulty === settings.difficulty && cache.settings.count === settings.count &&
+            cache.settings.quizLanguage === settings.quizLanguage) {
           currentTranscript = cache.transcript;
           currentSegments = cache.segments || [];
           renderAll(cache.content);
@@ -401,7 +410,8 @@
               difficulty: settings.difficulty,
               dictationCount: Number(settings.count),
               quizCount: Number(settings.count),
-              vocabCount: 8
+              vocabCount: 8,
+              quizLanguage: settings.quizLanguage
             })
           });
           var contentData = await contentRes.json();
