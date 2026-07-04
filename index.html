@@ -5,15 +5,19 @@
     <style>
       body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
 
-      .header-area { max-width: 1200px; margin: 0 auto 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+      .header-area { max-width: 1200px; margin: 0 auto 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
       h2 { color: #2c3e50; margin: 0; }
+
+      .settings-row { display: flex; align-items: center; gap: 12px; font-size: 0.9em; background: white; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+      .settings-row label { color: #555; }
+      .settings-row select { padding: 5px 8px; font-size: 0.9em; }
 
       .main-container { display: flex; gap: 30px; max-width: 1200px; margin: 0 auto; align-items: flex-start; flex-wrap: wrap; }
 
       .video-section { flex: 1; min-width: 500px; }
       .input-area { display: flex; gap: 10px; margin-bottom: 20px; }
       .input-area input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-      button, select { padding: 10px 15px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; transition: 0.3s; }
+      button, select { padding: 10px 15px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; transition: 0.2s; }
       button:hover { background-color: #0056b3; }
       button:disabled { background-color: #aaa; cursor: not-allowed; }
       select { background-color: #28a745; }
@@ -25,26 +29,36 @@
       .history-item { cursor: pointer; color: #007bff; padding: 8px 0; border-bottom: 1px solid #eee; transition: 0.2s; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
       .history-item:hover { color: #0056b3; font-weight: bold; padding-left: 5px; }
 
-      .learning-section { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px; }
+      /* --- 学習エリア(タブ) --- */
+      .learning-section { flex: 1; min-width: 420px; }
+      .tab-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      .tab-btn { background-color: #dfe6ee; color: #444; padding: 8px 12px; font-size: 0.85em; border-radius: 6px 6px 0 0; }
+      .tab-btn:hover { background-color: #c7d2de; }
+      .tab-btn.active { background-color: #007bff; color: white; }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
       .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
       .box-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f4f4f9; padding-bottom: 10px; margin-bottom: 10px; }
-      .box h3 { margin: 0; color: #007bff; }
+      .box h3 { margin: 0; color: #007bff; font-size: 1.1em; }
       .regen-btn { background-color: #6c757d; font-size: 0.8em; padding: 6px 10px; }
       .regen-btn:hover { background-color: #565e64; }
 
       .status-line { font-size: 0.9em; color: #666; margin-bottom: 10px; min-height: 1.2em; }
       .status-line.error { color: #c0392b; font-weight: bold; }
+      .cache-note { font-size: 0.8em; color: #27ae60; margin-bottom: 10px; }
 
+      /* --- ディクテーション --- */
       .dictation-item { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px dashed #eee; }
       .dictation-item:last-child { border-bottom: none; }
       .dictation-sentence { font-size: 1.05em; line-height: 1.8; margin-bottom: 8px; }
-      .dictation-input { width: 130px; padding: 5px; font-size: 1em; border: 1px solid #007bff; border-radius: 4px; text-align: center; font-weight: bold; }
+      .dictation-input { width: 160px; padding: 5px; font-size: 1em; border: 1px solid #007bff; border-radius: 4px; text-align: center; font-weight: bold; }
       .dictation-input.correct { border-color: #27ae60; background-color: #eafaf1; }
       .dictation-input.wrong { border-color: #e74c3c; background-color: #fdecea; }
       .dictation-answer-hint { font-size: 0.85em; color: #888; margin-left: 8px; }
       .check-btn { background-color: #e67e22; width: 100%; margin-top: 10px; }
       .check-btn:hover { background-color: #d35400; }
 
+      /* --- クイズ共通 --- */
       .quiz-item { margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px dashed #eee; }
       .quiz-item:last-child { border-bottom: none; }
       .quiz-question { font-weight: bold; margin-bottom: 10px; }
@@ -54,6 +68,40 @@
       .quiz-option.correct { background-color: #d4edda; border-color: #27ae60; color: #1e7e34; font-weight: bold; }
       .quiz-option.wrong { background-color: #f8d7da; border-color: #e74c3c; color: #a71d2a; }
       .quiz-explanation { margin-top: 8px; font-size: 0.9em; color: #555; background: #f4f4f9; padding: 8px 10px; border-radius: 6px; display: none; }
+
+      /* --- 単語帳 --- */
+      .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .vocab-card { background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; padding: 12px; cursor: pointer; }
+      .vocab-term { font-weight: bold; color: #2c3e50; }
+      .vocab-pos { font-size: 0.75em; color: #888; font-weight: normal; }
+      .vocab-reveal-hint { font-size: 0.75em; color: #999; margin-top: 4px; }
+      .vocab-meaning, .vocab-example { display: none; margin-top: 6px; font-size: 0.9em; }
+      .vocab-meaning { color: #007bff; font-weight: bold; }
+      .vocab-example { color: #666; font-style: italic; }
+      .vocab-card.revealed .vocab-meaning,
+      .vocab-card.revealed .vocab-example { display: block; }
+      .vocab-card.revealed .vocab-reveal-hint { display: none; }
+
+      /* --- シャドーイング --- */
+      .shadow-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 0.9em; }
+      .shadow-item { border-bottom: 1px dashed #eee; padding: 10px 0; }
+      .shadow-item:last-child { border-bottom: none; }
+      .shadow-text { font-size: 1em; line-height: 1.6; margin-bottom: 8px; }
+      .shadow-text.blurred:not(.revealed) { filter: blur(5px); cursor: pointer; user-select: none; }
+      .shadow-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      .shadow-controls button { font-size: 0.8em; padding: 6px 10px; }
+      .rec-btn { background-color: #e74c3c; }
+      .rec-btn:hover { background-color: #c0392b; }
+      .rec-btn.recording { background-color: #c0392b; animation: pulse 1s infinite; }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+      /* --- ライティング --- */
+      #summaryInput { width: 100%; box-sizing: border-box; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; }
+      .feedback-box { margin-top: 14px; background: #f8f9fa; border-radius: 8px; padding: 14px; }
+      .feedback-score { font-size: 1.3em; font-weight: bold; color: #007bff; margin-bottom: 8px; }
+      .feedback-section-title { font-weight: bold; margin-top: 10px; color: #444; }
+      .feedback-corrected { background: #eafaf1; padding: 10px; border-radius: 6px; margin-top: 6px; font-style: italic; }
+
       .placeholder-note { font-size: 0.9em; color: #888; }
     </style>
   </head>
@@ -61,6 +109,22 @@
 
     <div class="header-area">
       <h2>TED AI学習 Player</h2>
+      <div class="settings-row">
+        <label>難易度:
+          <select id="difficultySelect" onchange="saveSettings()">
+            <option value="easy">やさしい</option>
+            <option value="normal" selected>ふつう</option>
+            <option value="hard">難しい</option>
+          </select>
+        </label>
+        <label>問題数:
+          <select id="countSelect" onchange="saveSettings()">
+            <option value="3">3問</option>
+            <option value="5" selected>5問</option>
+            <option value="8">8問</option>
+          </select>
+        </label>
+      </div>
     </div>
 
     <div class="main-container">
@@ -88,34 +152,111 @@
         </div>
       </div>
 
-      <!-- 右側：学習エリア -->
+      <!-- 右側：学習エリア(タブ) -->
       <div class="learning-section">
-        <div class="box">
-          <div class="box-header">
-            <h3>✍️ 穴埋めディクテーション</h3>
-            <button class="regen-btn" onclick="generateLearningContent()">🔄 再生成</button>
-          </div>
-          <div class="status-line" id="dictationStatus"></div>
-          <div id="dictationContainer">
-            <span class="placeholder-note">動画を読み込むと、自動で問題が作られます。</span>
-          </div>
-          <button class="check-btn" id="dictationCheckBtn" style="display:none;" onclick="checkDictation()">答え合わせをする</button>
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="dictation" onclick="switchTab('dictation')">✍️ ディクテーション</button>
+          <button class="tab-btn" data-tab="quiz" onclick="switchTab('quiz')">🧠 クイズ</button>
+          <button class="tab-btn" data-tab="vocab" onclick="switchTab('vocab')">📖 単語帳</button>
+          <button class="tab-btn" data-tab="vocabQuiz" onclick="switchTab('vocabQuiz')">🔤 単語クイズ</button>
+          <button class="tab-btn" data-tab="shadowing" onclick="switchTab('shadowing')">🗣️ シャドーイング</button>
+          <button class="tab-btn" data-tab="writing" onclick="switchTab('writing')">📝 ライティング</button>
         </div>
 
-        <div class="box">
-          <div class="box-header">
-            <h3>🧠 AI 理解度チェッククイズ</h3>
+        <div class="status-line" id="globalStatus"></div>
+        <div class="cache-note" id="cacheNote"></div>
+
+        <!-- ディクテーション -->
+        <div class="tab-panel active" id="tab-dictation">
+          <div class="box">
+            <div class="box-header">
+              <h3>✍️ 穴埋めディクテーション</h3>
+              <button class="regen-btn" onclick="generateLearningContent(true)">🔄 再生成</button>
+            </div>
+            <div id="dictationContainer"><span class="placeholder-note">動画を読み込むと、自動で問題が作られます。</span></div>
+            <button class="check-btn" id="dictationCheckBtn" style="display:none;" onclick="checkDictation()">答え合わせをする</button>
           </div>
-          <div class="status-line" id="quizStatus"></div>
-          <div id="quizContainer">
-            <span class="placeholder-note">動画を読み込むと、自動で問題が作られます。</span>
+        </div>
+
+        <!-- クイズ -->
+        <div class="tab-panel" id="tab-quiz">
+          <div class="box">
+            <div class="box-header"><h3>🧠 AI 理解度チェッククイズ</h3></div>
+            <div id="quizContainer"><span class="placeholder-note">動画を読み込むと、自動で問題が作られます。</span></div>
+          </div>
+        </div>
+
+        <!-- 単語帳 -->
+        <div class="tab-panel" id="tab-vocab">
+          <div class="box">
+            <div class="box-header"><h3>📖 重要単語・フレーズ集</h3></div>
+            <div id="vocabContainer"><span class="placeholder-note">動画を読み込むと、自動で単語が抽出されます。タップで意味が見られます。</span></div>
+          </div>
+        </div>
+
+        <!-- 単語クイズ -->
+        <div class="tab-panel" id="tab-vocabQuiz">
+          <div class="box">
+            <div class="box-header"><h3>🔤 単語クイズ</h3></div>
+            <div id="vocabQuizContainer"><span class="placeholder-note">動画を読み込むと、単語帳から自動でクイズが作られます。</span></div>
+          </div>
+        </div>
+
+        <!-- シャドーイング -->
+        <div class="tab-panel" id="tab-shadowing">
+          <div class="box">
+            <div class="box-header"><h3>🗣️ シャドーイング / オーバーラッピング</h3></div>
+            <div class="shadow-toolbar">
+              <label><input type="checkbox" id="hideTextCheckbox" onchange="renderShadowing()"> 文字を隠して練習する</label>
+            </div>
+            <div id="shadowingContainer"><span class="placeholder-note">動画を読み込むと、文ごとに区切って再生・録音練習ができます。</span></div>
+          </div>
+        </div>
+
+        <!-- ライティング -->
+        <div class="tab-panel" id="tab-writing">
+          <div class="box">
+            <div class="box-header"><h3>📝 要約ライティング練習</h3></div>
+            <p class="placeholder-note">この動画の内容を英語で要約してみましょう(3〜5文程度)。AIが内容と英文を採点・添削します。</p>
+            <textarea id="summaryInput" rows="6" placeholder="This talk is about..."></textarea>
+            <button class="check-btn" onclick="submitSummary()" style="margin-top:10px;">AIに提出して添削してもらう</button>
+            <div id="summaryStatus" class="status-line"></div>
+            <div id="summaryFeedback"></div>
           </div>
         </div>
       </div>
     </div>
 
     <script>
-      // --- YouTube プレイヤーの仕組み ---
+      // ============ 設定管理 ============
+      function loadSettings() {
+        var saved = JSON.parse(localStorage.getItem('ted_settings') || '{}');
+        if (saved.difficulty) document.getElementById('difficultySelect').value = saved.difficulty;
+        if (saved.count) document.getElementById('countSelect').value = saved.count;
+      }
+      function saveSettings() {
+        var settings = getSettings();
+        localStorage.setItem('ted_settings', JSON.stringify(settings));
+      }
+      function getSettings() {
+        return {
+          difficulty: document.getElementById('difficultySelect').value,
+          count: document.getElementById('countSelect').value
+        };
+      }
+      document.addEventListener('DOMContentLoaded', loadSettings);
+
+      // ============ タブ切り替え ============
+      function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(function (btn) {
+          btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+        document.querySelectorAll('.tab-panel').forEach(function (panel) {
+          panel.classList.toggle('active', panel.id === 'tab-' + tabName);
+        });
+      }
+
+      // ============ YouTube プレイヤー ============
       var tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
       var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -123,6 +264,8 @@
 
       var player;
       var currentVideoId = 'arj7oStGLkU';
+      var currentTranscript = '';
+      var currentSegments = [];
 
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
@@ -153,7 +296,7 @@
           currentVideoId = match[1];
           player.loadVideoById(currentVideoId);
           saveToHistory(currentVideoId, url, "タイトル取得中...");
-          generateLearningContent();
+          generateLearningContent(false);
         } else {
           alert("正しいYouTubeのURLを入力してください！");
         }
@@ -189,66 +332,105 @@
       function loadFromHistory(videoId) {
         currentVideoId = videoId;
         player.loadVideoById(videoId);
-        generateLearningContent();
+        generateLearningContent(false);
       }
       function playVideo() { player.playVideo(); }
       function pauseVideo() { player.pauseVideo(); }
       function rewind10Seconds() { player.seekTo(player.getCurrentTime() - 10, true); }
       function changeSpeed() { player.setPlaybackRate(parseFloat(document.getElementById('speed').value)); }
 
-      // --- 字幕取得 → Gemini問題生成(同一オリジンの /api を呼ぶだけ) ---
-      async function generateLearningContent() {
-        var dictationStatus = document.getElementById('dictationStatus');
-        var quizStatus = document.getElementById('quizStatus');
-        var dictationContainer = document.getElementById('dictationContainer');
-        var quizContainer = document.getElementById('quizContainer');
-        var checkBtn = document.getElementById('dictationCheckBtn');
+      // ============ キャッシュ管理 ============
+      function cacheKey(videoId) { return 'ted_cache_v2_' + videoId; }
+      function loadCache(videoId) {
+        try { return JSON.parse(localStorage.getItem(cacheKey(videoId))); } catch (e) { return null; }
+      }
+      function saveCache(videoId, data) {
+        try { localStorage.setItem(cacheKey(videoId), JSON.stringify(data)); } catch (e) { /* 容量オーバー等は無視 */ }
+      }
 
-        dictationContainer.innerHTML = "";
-        quizContainer.innerHTML = "";
-        checkBtn.style.display = "none";
-        dictationStatus.className = "status-line";
-        quizStatus.className = "status-line";
-        dictationStatus.innerText = "📥 字幕を取得中...";
-        quizStatus.innerText = "";
+      // ============ 字幕取得 → Gemini問題生成 ============
+      async function generateLearningContent(forceRegenerate) {
+        var globalStatus = document.getElementById('globalStatus');
+        var cacheNote = document.getElementById('cacheNote');
+        globalStatus.className = 'status-line';
+        cacheNote.innerText = '';
+        globalStatus.innerText = '';
 
-        var transcriptText;
-        try {
-          var res = await fetch(`/api/transcript?v=${currentVideoId}`);
-          var data = await res.json();
-          if (!res.ok) throw new Error(data.error || "字幕取得に失敗しました");
-          transcriptText = data.text;
-        } catch (e) {
-          dictationStatus.innerText = "❌ " + e.message;
-          dictationStatus.className = "status-line error";
+        var settings = getSettings();
+        var cache = loadCache(currentVideoId);
+
+        // フルキャッシュ(同じ難易度・問題数)がある場合は何も呼ばずに表示するだけ
+        if (cache && cache.content && !forceRegenerate &&
+            cache.settings && cache.settings.difficulty === settings.difficulty && cache.settings.count === settings.count) {
+          currentTranscript = cache.transcript;
+          currentSegments = cache.segments || [];
+          renderAll(cache.content);
+          cacheNote.innerText = '💾 保存済みのデータを表示中(APIは呼んでいません)';
           return;
         }
 
-        dictationStatus.innerText = "🤖 AIが問題を作成中...（数十秒かかることがあります）";
-        try {
-          var quizRes = await fetch(`/api/generate-quiz`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ transcript: transcriptText })
-          });
-          var quizData = await quizRes.json();
-          if (!quizRes.ok) throw new Error(quizData.error || "問題生成に失敗しました");
+        // 字幕(transcript)はキャッシュがあれば使い回し、なければSupadataから取得
+        if (cache && cache.transcript) {
+          currentTranscript = cache.transcript;
+          currentSegments = cache.segments || [];
+        } else {
+          globalStatus.innerText = '📥 字幕を取得中...';
+          try {
+            var res = await fetch(`/api/transcript?v=${currentVideoId}`);
+            var data = await res.json();
+            if (!res.ok) throw new Error(data.error || '字幕取得に失敗しました');
+            currentTranscript = data.text;
+            currentSegments = data.segments || [];
+            saveCache(currentVideoId, { transcript: currentTranscript, segments: currentSegments, content: null, settings: null });
+          } catch (e) {
+            globalStatus.innerText = '❌ ' + e.message;
+            globalStatus.className = 'status-line error';
+            return;
+          }
+        }
 
-          dictationStatus.innerText = "";
-          quizStatus.innerText = "";
-          renderDictation(quizData.dictation || []);
-          renderQuiz(quizData.quiz || []);
+        renderShadowing();
+
+        globalStatus.innerText = '🤖 AIが問題を作成中...（数十秒かかることがあります）';
+        try {
+          var contentRes = await fetch(`/api/generate-content`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              transcript: currentTranscript,
+              difficulty: settings.difficulty,
+              dictationCount: Number(settings.count),
+              quizCount: Number(settings.count),
+              vocabCount: 8
+            })
+          });
+          var contentData = await contentRes.json();
+          if (!contentRes.ok) throw new Error(contentData.error || '問題生成に失敗しました');
+
+          globalStatus.innerText = '';
+          renderAll(contentData);
+          saveCache(currentVideoId, { transcript: currentTranscript, segments: currentSegments, content: contentData, settings: settings });
         } catch (e) {
-          dictationStatus.innerText = "❌ " + e.message;
-          dictationStatus.className = "status-line error";
+          globalStatus.innerText = '❌ ' + e.message;
+          globalStatus.className = 'status-line error';
         }
       }
 
+      function renderAll(content) {
+        renderDictation(content.dictation || []);
+        renderQuiz(content.quiz || []);
+        renderVocabulary(content.vocabulary || []);
+        renderVocabQuiz(content.vocab_quiz || []);
+        renderShadowing();
+      }
+
+      // ============ ディクテーション ============
       function renderDictation(items) {
         var container = document.getElementById('dictationContainer');
         var checkBtn = document.getElementById('dictationCheckBtn');
         if (!items.length) {
           container.innerHTML = '<span class="placeholder-note">問題を生成できませんでした。</span>';
+          checkBtn.style.display = 'none';
           return;
         }
         var html = "";
@@ -261,7 +443,7 @@
             </div>`;
         });
         container.innerHTML = html;
-        checkBtn.style.display = "block";
+        checkBtn.style.display = 'block';
       }
 
       function checkDictation() {
@@ -283,6 +465,7 @@
         });
       }
 
+      // ============ 理解度クイズ ============
       function renderQuiz(items) {
         var container = document.getElementById('quizContainer');
         if (!items.length) {
@@ -303,7 +486,7 @@
 
       function answerQuiz(questionIndex, optionIndex) {
         var item = window.__quizData[questionIndex];
-        var quizItems = document.querySelectorAll('.quiz-item');
+        var quizItems = document.querySelectorAll('#quizContainer .quiz-item');
         var buttons = quizItems[questionIndex].querySelectorAll('.quiz-option');
         buttons.forEach(function (btn, i) {
           btn.classList.remove('correct', 'wrong');
@@ -314,9 +497,192 @@
         document.getElementById('quiz-explanation-' + questionIndex).style.display = 'block';
       }
 
+      // ============ 単語帳 ============
+      function renderVocabulary(items) {
+        var container = document.getElementById('vocabContainer');
+        if (!items.length) {
+          container.innerHTML = '<span class="placeholder-note">単語を抽出できませんでした。</span>';
+          return;
+        }
+        var html = '<div class="vocab-grid">';
+        items.forEach(function (item) {
+          html += `
+            <div class="vocab-card" onclick="this.classList.toggle('revealed')">
+              <div class="vocab-term">${escapeHtml(item.term)} <span class="vocab-pos">(${escapeHtml(item.pos || '')})</span></div>
+              <div class="vocab-reveal-hint">タップして意味を見る</div>
+              <div class="vocab-meaning">${escapeHtml(item.meaning_ja)}</div>
+              <div class="vocab-example">${escapeHtml(item.example_en)}</div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      // ============ 単語クイズ ============
+      function renderVocabQuiz(items) {
+        var container = document.getElementById('vocabQuizContainer');
+        if (!items.length) {
+          container.innerHTML = '<span class="placeholder-note">単語クイズを生成できませんでした。</span>';
+          return;
+        }
+        var html = "";
+        items.forEach(function (item, qi) {
+          html += `<div class="quiz-item"><div class="quiz-question">Q${qi + 1}. 「${escapeHtml(item.term)}」の意味は？</div><div class="quiz-options">`;
+          item.options.forEach(function (opt, oi) {
+            html += `<button class="quiz-option" onclick="answerVocabQuiz(${qi}, ${oi})">${String.fromCharCode(65 + oi)}. ${escapeHtml(opt)}</button>`;
+          });
+          html += `</div></div>`;
+        });
+        container.innerHTML = html;
+        window.__vocabQuizData = items;
+      }
+
+      function answerVocabQuiz(questionIndex, optionIndex) {
+        var item = window.__vocabQuizData[questionIndex];
+        var quizItems = document.querySelectorAll('#vocabQuizContainer .quiz-item');
+        var buttons = quizItems[questionIndex].querySelectorAll('.quiz-option');
+        buttons.forEach(function (btn, i) {
+          btn.classList.remove('correct', 'wrong');
+          btn.disabled = true;
+          if (i === item.correct_index) btn.classList.add('correct');
+          else if (i === optionIndex) btn.classList.add('wrong');
+        });
+      }
+
+      // ============ シャドーイング / オーバーラッピング ============
+      var segmentWatcher = null;
+      var mediaRecorder = null;
+      var recordedChunks = [];
+      var recordingIndex = null;
+      var recordings = {}; // index -> object URL
+
+      function renderShadowing() {
+        var container = document.getElementById('shadowingContainer');
+        if (!currentSegments || !currentSegments.length) {
+          container.innerHTML = '<span class="placeholder-note">動画を読み込むと、文ごとに区切って再生・録音練習ができます。</span>';
+          return;
+        }
+        var hideText = document.getElementById('hideTextCheckbox').checked;
+        var html = "";
+        currentSegments.forEach(function (seg, i) {
+          var recAudioHtml = recordings[i] ? `<audio controls src="${recordings[i]}" style="height:28px; vertical-align:middle;"></audio>` : "";
+          html += `
+            <div class="shadow-item">
+              <div class="shadow-text ${hideText ? 'blurred' : ''}" onclick="this.classList.toggle('revealed')">${escapeHtml(seg.text)}</div>
+              <div class="shadow-controls">
+                <button onclick="playSegment(${i})">▶ 再生</button>
+                <button class="rec-btn" id="rec-btn-${i}" onclick="toggleRecording(${i})">🎙 録音</button>
+                <span id="rec-audio-${i}">${recAudioHtml}</span>
+              </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+      }
+
+      function playSegment(index) {
+        var seg = currentSegments[index];
+        if (!seg || !player) return;
+        if (segmentWatcher) clearInterval(segmentWatcher);
+        player.seekTo(seg.start, true);
+        player.playVideo();
+        if (!seg.duration) return; // タイムスタンプがない場合は自動停止しない
+        segmentWatcher = setInterval(function () {
+          if (player.getCurrentTime() >= seg.start + seg.duration - 0.15) {
+            player.pauseVideo();
+            clearInterval(segmentWatcher);
+            segmentWatcher = null;
+          }
+        }, 150);
+      }
+
+      async function toggleRecording(index) {
+        var btn = document.getElementById('rec-btn-' + index);
+
+        // 録音中に同じボタンを押した→停止
+        if (recordingIndex === index && mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+          return;
+        }
+        // 他のセグメントを録音中なら先に止める
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+
+        try {
+          var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          recordedChunks = [];
+          recordingIndex = index;
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = function (e) { if (e.data.size > 0) recordedChunks.push(e.data); };
+          mediaRecorder.onstop = function () {
+            var blob = new Blob(recordedChunks, { type: 'audio/webm' });
+            if (recordings[index]) URL.revokeObjectURL(recordings[index]);
+            recordings[index] = URL.createObjectURL(blob);
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            var audioSpan = document.getElementById('rec-audio-' + index);
+            if (audioSpan) audioSpan.innerHTML = `<audio controls src="${recordings[index]}" style="height:28px; vertical-align:middle;"></audio>`;
+            var b = document.getElementById('rec-btn-' + index);
+            if (b) { b.innerText = '🎙 録音'; b.classList.remove('recording'); }
+            recordingIndex = null;
+          };
+          mediaRecorder.start();
+          btn.innerText = '⏹ 停止';
+          btn.classList.add('recording');
+        } catch (e) {
+          alert('マイクへのアクセスが許可されませんでした: ' + e.message);
+        }
+      }
+
+      // ============ ライティング練習 ============
+      async function submitSummary() {
+        var summary = document.getElementById('summaryInput').value.trim();
+        var status = document.getElementById('summaryStatus');
+        var feedbackDiv = document.getElementById('summaryFeedback');
+        feedbackDiv.innerHTML = '';
+        status.className = 'status-line';
+
+        if (!summary) {
+          status.innerText = '⚠️ 要約を入力してください';
+          status.className = 'status-line error';
+          return;
+        }
+        if (!currentTranscript) {
+          status.innerText = '⚠️ 先に動画を読み込んで字幕を取得してください';
+          status.className = 'status-line error';
+          return;
+        }
+
+        status.innerText = '🤖 添削中...';
+        try {
+          var res = await fetch('/api/writing-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transcript: currentTranscript, summary: summary })
+          });
+          var data = await res.json();
+          if (!res.ok) throw new Error(data.error || '添削に失敗しました');
+
+          status.innerText = '';
+          feedbackDiv.innerHTML = `
+            <div class="feedback-box">
+              <div class="feedback-score">スコア: ${escapeHtml(String(data.score))} / 100</div>
+              <div class="feedback-section-title">👍 良かった点</div>
+              <div>${escapeHtml(data.good_points)}</div>
+              <div class="feedback-section-title">✏️ 改善点</div>
+              <div>${escapeHtml(data.improvements)}</div>
+              <div class="feedback-section-title">✅ 添削後の英文</div>
+              <div class="feedback-corrected">${escapeHtml(data.corrected_version)}</div>
+            </div>`;
+        } catch (e) {
+          status.innerText = '❌ ' + e.message;
+          status.className = 'status-line error';
+        }
+      }
+
+      // ============ ユーティリティ ============
       function escapeHtml(str) {
         if (!str) return "";
-        return str.replace(/[&<>"']/g, function (c) {
+        return String(str).replace(/[&<>"']/g, function (c) {
           return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
         });
       }
