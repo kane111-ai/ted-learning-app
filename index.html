@@ -42,6 +42,10 @@
       .box h3 { margin: 0; color: #007bff; font-size: 1.1em; }
       .regen-btn { background-color: #6c757d; font-size: 0.8em; padding: 6px 10px; }
       .regen-btn:hover { background-color: #565e64; }
+      .lang-toggle { display: flex; gap: 4px; }
+      .lang-toggle-btn { background-color: #e9ecef; color: #555; font-size: 0.75em; padding: 5px 10px; }
+      .lang-toggle-btn:hover { background-color: #dbe0e5; }
+      .lang-toggle-btn.active { background-color: #007bff; color: white; }
 
       .status-line { font-size: 0.9em; color: #666; margin-bottom: 10px; min-height: 1.2em; }
       .status-line.error { color: #c0392b; font-weight: bold; }
@@ -124,12 +128,6 @@
             <option value="8">8問</option>
           </select>
         </label>
-        <label>クイズ言語:
-          <select id="quizLanguageSelect" onchange="saveSettings()">
-            <option value="ja" selected>日本語</option>
-            <option value="en">English</option>
-          </select>
-        </label>
       </div>
     </div>
 
@@ -187,7 +185,13 @@
         <!-- クイズ -->
         <div class="tab-panel" id="tab-quiz">
           <div class="box">
-            <div class="box-header"><h3>🧠 AI 理解度チェッククイズ</h3></div>
+            <div class="box-header">
+              <h3>🧠 AI 理解度チェッククイズ</h3>
+              <div class="lang-toggle">
+                <button class="lang-toggle-btn active" id="quizLangBtn-ja" onclick="setQuizLang('ja')">日本語</button>
+                <button class="lang-toggle-btn" id="quizLangBtn-en" onclick="setQuizLang('en')">English</button>
+              </div>
+            </div>
             <div id="quizContainer"><span class="placeholder-note">動画を読み込むと、自動で問題が作られます。</span></div>
           </div>
         </div>
@@ -203,7 +207,13 @@
         <!-- 単語クイズ -->
         <div class="tab-panel" id="tab-vocabQuiz">
           <div class="box">
-            <div class="box-header"><h3>🔤 単語クイズ</h3></div>
+            <div class="box-header">
+              <h3>🔤 単語クイズ</h3>
+              <div class="lang-toggle">
+                <button class="lang-toggle-btn active" id="vocabQuizLangBtn-ja" onclick="setVocabQuizLang('ja')">日本語</button>
+                <button class="lang-toggle-btn" id="vocabQuizLangBtn-en" onclick="setVocabQuizLang('en')">English</button>
+              </div>
+            </div>
             <div id="vocabQuizContainer"><span class="placeholder-note">動画を読み込むと、単語帳から自動でクイズが作られます。</span></div>
           </div>
         </div>
@@ -239,7 +249,6 @@
         var saved = JSON.parse(localStorage.getItem('ted_settings') || '{}');
         if (saved.difficulty) document.getElementById('difficultySelect').value = saved.difficulty;
         if (saved.count) document.getElementById('countSelect').value = saved.count;
-        if (saved.quizLanguage) document.getElementById('quizLanguageSelect').value = saved.quizLanguage;
       }
       function saveSettings() {
         var settings = getSettings();
@@ -248,8 +257,7 @@
       function getSettings() {
         return {
           difficulty: document.getElementById('difficultySelect').value,
-          count: document.getElementById('countSelect').value,
-          quizLanguage: document.getElementById('quizLanguageSelect').value
+          count: document.getElementById('countSelect').value
         };
       }
       document.addEventListener('DOMContentLoaded', loadSettings);
@@ -367,10 +375,9 @@
         var settings = getSettings();
         var cache = loadCache(currentVideoId);
 
-        // フルキャッシュ(同じ難易度・問題数・クイズ言語)がある場合は何も呼ばずに表示するだけ
+        // フルキャッシュ(同じ難易度・問題数)がある場合は何も呼ばずに表示するだけ
         if (cache && cache.content && !forceRegenerate &&
-            cache.settings && cache.settings.difficulty === settings.difficulty && cache.settings.count === settings.count &&
-            cache.settings.quizLanguage === settings.quizLanguage) {
+            cache.settings && cache.settings.difficulty === settings.difficulty && cache.settings.count === settings.count) {
           currentTranscript = cache.transcript;
           currentSegments = cache.segments || [];
           renderAll(cache.content);
@@ -389,7 +396,7 @@
             var data = await res.json();
             if (!res.ok) throw new Error(data.error || '字幕取得に失敗しました');
             currentTranscript = data.text;
-            currentSegments = data.segments || [];
+            currentSegments = mergeSegmentsForShadowing(data.segments || []);
             saveCache(currentVideoId, { transcript: currentTranscript, segments: currentSegments, content: null, settings: null });
           } catch (e) {
             globalStatus.innerText = '❌ ' + e.message;
@@ -410,8 +417,7 @@
               difficulty: settings.difficulty,
               dictationCount: Number(settings.count),
               quizCount: Number(settings.count),
-              vocabCount: 8,
-              quizLanguage: settings.quizLanguage
+              vocabCount: 8
             })
           });
           var contentData = await contentRes.json();
@@ -428,9 +434,17 @@
 
       function renderAll(content) {
         renderDictation(content.dictation || []);
-        renderQuiz(content.quiz || []);
+        window.__quizDataJa = content.quiz || [];
+        window.__quizDataEn = content.quiz_en || [];
+        window.__vocabQuizDataJa = content.vocab_quiz || [];
+        window.__vocabQuizDataEn = content.vocab_quiz_en || [];
+        currentQuizLang = 'ja';
+        currentVocabQuizLang = 'ja';
+        setQuizLangButtons('ja');
+        setVocabQuizLangButtons('ja');
+        renderQuiz(window.__quizDataJa);
         renderVocabulary(content.vocabulary || []);
-        renderVocabQuiz(content.vocab_quiz || []);
+        renderVocabQuiz(window.__vocabQuizDataJa);
         renderShadowing();
       }
 
@@ -475,11 +489,36 @@
         });
       }
 
+      // ============ クイズ 日英切り替え ============
+      var currentQuizLang = 'ja';
+      var currentVocabQuizLang = 'ja';
+
+      function setQuizLangButtons(lang) {
+        document.getElementById('quizLangBtn-ja').classList.toggle('active', lang === 'ja');
+        document.getElementById('quizLangBtn-en').classList.toggle('active', lang === 'en');
+      }
+      function setVocabQuizLangButtons(lang) {
+        document.getElementById('vocabQuizLangBtn-ja').classList.toggle('active', lang === 'ja');
+        document.getElementById('vocabQuizLangBtn-en').classList.toggle('active', lang === 'en');
+      }
+      function setQuizLang(lang) {
+        currentQuizLang = lang;
+        setQuizLangButtons(lang);
+        var data = lang === 'en' ? window.__quizDataEn : window.__quizDataJa;
+        renderQuiz(data || []);
+      }
+      function setVocabQuizLang(lang) {
+        currentVocabQuizLang = lang;
+        setVocabQuizLangButtons(lang);
+        var data = lang === 'en' ? window.__vocabQuizDataEn : window.__vocabQuizDataJa;
+        renderVocabQuiz(data || []);
+      }
+
       // ============ 理解度クイズ ============
       function renderQuiz(items) {
         var container = document.getElementById('quizContainer');
         if (!items.length) {
-          container.innerHTML = '<span class="placeholder-note">問題を生成できませんでした。</span>';
+          container.innerHTML = '<span class="placeholder-note">問題を生成できませんでした。(古いキャッシュの場合は「🔄 再生成」を試してください)</span>';
           return;
         }
         var html = "";
@@ -532,7 +571,7 @@
       function renderVocabQuiz(items) {
         var container = document.getElementById('vocabQuizContainer');
         if (!items.length) {
-          container.innerHTML = '<span class="placeholder-note">単語クイズを生成できませんでした。</span>';
+          container.innerHTML = '<span class="placeholder-note">単語クイズを生成できませんでした。(古いキャッシュの場合は「🔄 再生成」を試してください)</span>';
           return;
         }
         var html = "";
@@ -565,6 +604,32 @@
       var recordedChunks = [];
       var recordingIndex = null;
       var recordings = {}; // index -> object URL
+
+      // Supadataの字幕は1行が数語の断片になっていることが多いので、
+      // 文末(. ! ?)か、語数/長さの上限に達するまで連結して1つの「文」にまとめる。
+      function mergeSegmentsForShadowing(rawSegments) {
+        var merged = [];
+        var buffer = null;
+        rawSegments.forEach(function (seg) {
+          var segText = (seg.text || '').trim();
+          if (!segText) return;
+          if (!buffer) {
+            buffer = { start: seg.start, duration: seg.duration, text: segText };
+          } else {
+            buffer.text += ' ' + segText;
+            buffer.duration = (seg.start + seg.duration) - buffer.start;
+          }
+          var endsSentence = /[.!?]["')\]]?$/.test(segText);
+          var wordCount = buffer.text.split(/\s+/).length;
+          var tooLong = wordCount >= 22 || buffer.duration >= 14;
+          if (endsSentence || tooLong) {
+            merged.push(buffer);
+            buffer = null;
+          }
+        });
+        if (buffer) merged.push(buffer);
+        return merged;
+      }
 
       function renderShadowing() {
         var container = document.getElementById('shadowingContainer');
@@ -608,12 +673,10 @@
       async function toggleRecording(index) {
         var btn = document.getElementById('rec-btn-' + index);
 
-        // 録音中に同じボタンを押した→停止
         if (recordingIndex === index && mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
           return;
         }
-        // 他のセグメントを録音中なら先に止める
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
