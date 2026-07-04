@@ -3,7 +3,7 @@ from flask_cors import CORS
 from youtube_transcript_api import YouTubeTranscriptApi
 
 app = Flask(__name__)
-CORS(app) # 先ほど作った画面からのアクセス（通信）を許可するおまじない
+CORS(app)
 
 @app.route('/api/transcript', methods=['GET'])
 def get_transcript():
@@ -12,7 +12,7 @@ def get_transcript():
         return jsonify({"error": "動画IDがありません"}), 400
         
     try:
-        # 英語の字幕を取得
+        # 英語の字幕を取得（大文字小文字に注意！）
         transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
         text_list = [t['text'] for t in transcript]
         full_text = " ".join(text_list)
