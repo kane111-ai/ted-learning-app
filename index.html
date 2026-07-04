@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+      #player { margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+      .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+      button, select {
+        padding: 10px 15px; font-size: 16px; cursor: pointer;
+        border: none; border-radius: 5px; background-color: #007bff; color: white;
+        transition: background-color 0.3s;
+      }
+      button:hover, select:hover { background-color: #0056b3; }
+      select { background-color: #28a745; }
+    </style>
+  </head>
+  <body>
+
+    <h2>TED シャドーイング Player</h2>
+    
+    <!-- YouTubeプレイヤーが埋め込まれる場所 -->
+    <div id="player"></div>
+
+    <!-- コントロールボタン群 -->
+    <div class="controls">
+      <button onclick="playVideo()">▶ 再生</button>
+      <button onclick="pauseVideo()">⏸ 一時停止</button>
+      <button onclick="rewind10Seconds()">⏪ 10秒戻る</button>
+      
+      <select id="speed" onchange="changeSpeed()">
+        <option value="0.5">0.5x (Slow)</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1.0x (Normal)</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+      </select>
+    </div>
+
+    <script>
+      // 1. IFrame APIのコードを非同期で読み込む
+      var tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      var player;
+      // 2. APIコードの読み込み完了後に実行される関数
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          height: '360',
+          width: '640',
+          // ここに好きなTEDトークのYouTube動画IDを入れます
+          // 例: ビル・ゲイツのTEDなら「8mcZcAjiJXI」
+          videoId: '8mcZcAjiJXI', 
+          playerVars: {
+            'playsinline': 1,
+            'rel': 0 // 関連動画を非表示
+          }
+        });
+      }
+
+      // --- 制御用の関数群 ---
+
+      // 再生
+      function playVideo() {
+        player.playVideo();
+      }
+
+      // 一時停止
+      function pauseVideo() {
+        player.pauseVideo();
+      }
+
+      // 10秒巻き戻し（シャドーイングの反復練習用）
+      function rewind10Seconds() {
+        var currentTime = player.getCurrentTime();
+        player.seekTo(currentTime - 10, true);
+      }
+
+      // 再生速度の変更
+      function changeSpeed() {
+        var speed = document.getElementById('speed').value;
+        player.setPlaybackRate(parseFloat(speed));
+      }
+    </script>
+  </body>
+</html>
