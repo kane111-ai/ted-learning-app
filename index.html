@@ -392,7 +392,8 @@
         } else {
           globalStatus.innerText = '📥 字幕を取得中...';
           try {
-            var res = await fetch(`/api/transcript?v=${currentVideoId}`);
+            // ▼ URLパラメータに &lang=en を追加する ▼
+            var res = await fetch(`/api/transcript?v=${currentVideoId}&lang=en`);
             var data = await res.json();
             if (!res.ok) throw new Error(data.error || '字幕取得に失敗しました');
             currentTranscript = data.text;
